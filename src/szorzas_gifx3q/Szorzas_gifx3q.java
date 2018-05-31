@@ -18,4 +18,8 @@ public class Szorzas_gifx3q {
         // TODO code application logic here
     }
     
+    public static int multiplyNaturals (int first, int second){
+        return 0;
+    }
+    
 }
