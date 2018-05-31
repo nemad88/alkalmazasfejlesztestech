@@ -39,28 +39,40 @@ public class Szorzas_gifx3qTest {
     }
 
     /**
-     * Test of multiplyNaturals method, of class Szorzas_gifx3q.
+     * Tesztelés két negatív számmal.
      */
     @Test
     public void testMultiplyNaturals1() {
         assertEquals(-1, multiplyNaturals(-10, -21));
     }
 
+    /**
+     * Tesztelés negatív, pozitív számmal.
+     */
     @Test
     public void testMultiplyNaturals2() {
         assertEquals(-1, multiplyNaturals(-1, 2));       
     }
 
+    /**
+     * Tesztelés pozitív, negatív számmal.
+     */
     @Test
     public void testMultiplyNaturals3() {
         assertEquals(-1, multiplyNaturals(2, -1));        
     }
 
+    /**
+     * Tesztelés két pozitív számmal.
+     */
     @Test
     public void testMultiplyNaturals4() {
         assertEquals(10, multiplyNaturals(1, 10));
     }
 
+    /**
+     * Tesztelés két pozitív számmal.
+     */
     @Test
     public void testMultiplyNaturals6() {
         assertEquals(10, multiplyNaturals(10, 1));
