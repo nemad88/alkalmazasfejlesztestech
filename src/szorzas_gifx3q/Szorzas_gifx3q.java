@@ -19,7 +19,10 @@ public class Szorzas_gifx3q {
     }
     
     public static int multiplyNaturals (int first, int second){
-        return 0;
-    }
-    
+        if(first >=0 && second >=0){
+            return first*second;    
+        } else {
+            return -1;
+        }        
+    }    
 }

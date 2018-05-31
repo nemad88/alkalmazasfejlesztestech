@@ -43,57 +43,26 @@ public class Szorzas_gifx3qTest {
      */
     @Test
     public void testMultiplyNaturals1() {
-        System.out.println("multiplyNaturals");
-        int first = 0;
-        int second = 0;
-        int expResult = 0;
-        int result = Szorzas_gifx3q.multiplyNaturals(first, second);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertEquals(-1, multiplyNaturals(-10, -21));
     }
 
     @Test
     public void testMultiplyNaturals2() {
-        assertEquals( -1, multiplyNaturals(-1,2));
-        // TODO review the generated test code and remove the default call to fail.        
+        assertEquals(-1, multiplyNaturals(-1, 2));       
     }
 
     @Test
     public void testMultiplyNaturals3() {
-        System.out.println("multiplyNaturals");
-        int first = 0;
-        int second = 0;
-        int expResult = 0;
-        int result = Szorzas_gifx3q.multiplyNaturals(first, second);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertEquals(-1, multiplyNaturals(2, -1));        
     }
 
     @Test
     public void testMultiplyNaturals4() {
-        System.out.println("multiplyNaturals");
-        int first = 0;
-        int second = 0;
-        int expResult = 0;
-        int result = Szorzas_gifx3q.multiplyNaturals(first, second);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertEquals(10, multiplyNaturals(1, 10));
     }
 
     @Test
     public void testMultiplyNaturals6() {
-        System.out.println("multiplyNaturals");
-        int first = 0;
-        int second = 0;
-        int expResult = 0;
-        int result = Szorzas_gifx3q.multiplyNaturals(first, second);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-
+        assertEquals(10, multiplyNaturals(10, 1));
     }
-
 }
