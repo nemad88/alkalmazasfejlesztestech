@@ -1,12 +1,21 @@
 package szorzas_gifx3q;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -25,121 +34,186 @@ import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 
 /**
- * 
+ *
  * @author Adam Nemeth
  * @version 1.0
  *
  */
-public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener{
+public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
 
-    JSpinner firNumberSpinner, secondNumberSpinner;
-    JPanel szamolPanel;
-    JPanel aboutPanel;
-    JButton calculateButton;
-    JTabbedPane tab;
-    JLabel aboutText;
-    Task task;
-    JProgressBar progressBar;
-    Integer firsttValue;
-    Integer secondtValue;
-    JTable table;
-    DefaultTableModel model;
-    
+    private JSpinner firstNumberSpinner, secondNumberSpinner;
+    private JPanel szamolPanel, vezerlokPanel, aboutPanel, adatbazisPanel;
+    private JButton calculateButton, dbbeButton, dbboButton;
+    private JTabbedPane tab;
+    private JLabel aboutText;
+    private Task task;
+    private JProgressBar progressBar;
+    private Integer firstValue;
+    private Integer secondValue;
+    private JTable table;
+    private DefaultTableModel model;
+    private Connection con;
+    private Statement stm;
+
+
     class Task extends SwingWorker<Void, Void> {
-        /*
-         * Main task. Executed in background thread.
-         */
+        
         @Override
-        public Void doInBackground() {            
-            int progress = 0;
-            //Initialize progress property.
+        public Void doInBackground() {
+            int progress = 0;            
             setProgress(0);
             while (progress < 100) {
-                //Sleep for up to one second.
                 try {
                     Thread.sleep(10);
-                } catch (InterruptedException ignore) {}
-                //Make random progress.
+                } catch (InterruptedException ignore) {
+                }                
                 progress += 1;
                 setProgress(progress);
             }
             return null;
-        } 
-        
+        }
+
         @Override
         public void done() {
-            JOptionPane.showMessageDialog(null, "Eredmény: " + firsttValue*secondtValue);
-            addRow(firsttValue, secondtValue);
+            JOptionPane.showMessageDialog(null, "Eredmény: " + multiplyNaturals(firstValue, secondValue));
+            addRowToTable(firstValue, secondValue);
+            setProgress(0);
         }
     }
-    
-    public Szorzas_gifx3q () {
+
+    public Szorzas_gifx3q() throws SQLException {
         super("Program");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        
+        setGUI();
+    }
+
+    public void setGUI() {
+
         szamolPanel = new JPanel();
+        vezerlokPanel = new JPanel();
         aboutPanel = new JPanel(new BorderLayout());
-        szamolPanel.setLayout(new FlowLayout());
-        firNumberSpinner = new JSpinner();
-        secondNumberSpinner = new JSpinner();        
+        adatbazisPanel = new JPanel();
+        szamolPanel.setLayout(new BoxLayout(szamolPanel, BoxLayout.Y_AXIS));
+
+        firstNumberSpinner = new JSpinner();
+        secondNumberSpinner = new JSpinner();
+
         calculateButton = new JButton("Számol");
+        dbbeButton = new JButton("DB-be nyom");
+        dbboButton = new JButton("DB-bő' tőt");
+        dbbeButton.setBackground(Color.yellow);
+        dbboButton.setBackground(Color.yellow);
+        dbbeButton.addActionListener((ae) -> {
+            try {
+                refreshDb();
+            } catch (SQLException ex) {
+                Logger.getLogger(Szorzas_gifx3q.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        dbboButton.addActionListener((ae) -> {
+            try {
+                loadDb();
+            } catch (SQLException ex) {
+                Logger.getLogger(Szorzas_gifx3q.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+
         tab = new JTabbedPane();
         aboutText = new JLabel("<html><center>Németh Ádám<br>nemethadam88@gmail.com</center></html>", SwingConstants.CENTER);
         table = new JTable();
-        
-        Object[][] data = {{1,1,1},{2,2,2},{3,3,3},{4,4,4}};        
-        String[] columnNames = {"Első dobás","Második dobás","Szorzat"};
+
+        Object[][] data = {};
+        String[] columnNames = {"Első dobás", "Második dobás", "Szorzat"};
         model = new DefaultTableModel(data, columnNames);
-        table.setModel(model);        
-        
-        progressBar = new JProgressBar(0, 100);        
+        table.setModel(model);
+
+        progressBar = new JProgressBar(0, 100);
         progressBar.setValue(0);
         progressBar.setStringPainted(true);
-        
+
         calculateButton.addActionListener((ae) -> {
-            firsttValue = (Integer)firNumberSpinner.getValue();
-            secondtValue = (Integer)secondNumberSpinner.getValue();
-            System.out.println(firsttValue*secondtValue);
+            firstValue = (Integer) firstNumberSpinner.getValue();
+            secondValue = (Integer) secondNumberSpinner.getValue();            
             task = new Task();
             task.addPropertyChangeListener(this);
             task.execute();            
         });
-        
+
         Dimension spinnerDimension = new Dimension(100, 30);
-        firNumberSpinner.setPreferredSize(spinnerDimension);
+        firstNumberSpinner.setPreferredSize(spinnerDimension);
         secondNumberSpinner.setPreferredSize(spinnerDimension);
-        
-        szamolPanel.add(firNumberSpinner);
-        szamolPanel.add(secondNumberSpinner);        
-        szamolPanel.add(calculateButton);
-        szamolPanel.add(progressBar);
-        //szamolPanel.add(table);
+
+        vezerlokPanel.add(firstNumberSpinner);
+        vezerlokPanel.add(secondNumberSpinner);
+        vezerlokPanel.add(calculateButton);
+        vezerlokPanel.add(progressBar);
+
+        adatbazisPanel.add(dbbeButton);
+        adatbazisPanel.add(dbboButton);
+
+        szamolPanel.add(vezerlokPanel);
         szamolPanel.add(new JScrollPane(table));
+        szamolPanel.add(adatbazisPanel);
         aboutPanel.add(aboutText, BorderLayout.CENTER);
-        
+
         tab.addTab("Számolás", szamolPanel);
-        tab.addTab("About", aboutPanel);        
+        tab.addTab("About", aboutPanel);
+
         add(tab);
-        //setSize(400, 300);
         pack();
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
     }
 
-    public void addRow(int first, int second){        
-        ((DefaultTableModel) table.getModel()).addRow(new Object [] {first, second, first*second});
+    public void addRowToTable(int first, int second) {
+        ((DefaultTableModel) table.getModel()).addRow(new Object[]{first, second, multiplyNaturals(first, second)});
     }
-    
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-       if ("progress" == evt.getPropertyName()) {
-            int progress = (Integer) evt.getNewValue();
-            progressBar.setValue(progress);            
-        }
+
+    public void loadDb() throws SQLException {
+        String sql = "select * from szorzas.dump;";
+        con = DriverManager.getConnection("jdbc:mysql://localhost:3307/szorzas?user=root&password=");
+        stm = con.createStatement();
+        ResultSet rs = stm.executeQuery(sql);        
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
+        
+        while (rs.next()) {
+            model.addRow(new Object[]{rs.getInt("F"),rs.getInt("S"), rs.getInt("P")});            
+        }        
     }    
     
+    public void refreshDb() throws SQLException {        
+        con = DriverManager.getConnection("jdbc:mysql://localhost:3307/?user=root&password=");
+        stm = con.createStatement();
+        String sql = "create database if not exists szorzas;";
+        stm.execute(sql);
+        sql = "create table if not exists szorzas.dump (F integer, S integer, P integer);";
+        stm.execute(sql);
+        sql = "delete from szorzas.dump;";
+        stm.execute(sql);        
+        int rowCount = table.getModel().getRowCount();
+        int columnCount = table.getModel().getColumnCount();
+
+        for (int i = 0; i < rowCount; i++) {
+            int firstValue = Integer.parseInt(table.getModel().getValueAt(i, 0).toString());
+            int secondValue = Integer.parseInt(table.getModel().getValueAt(i, 1).toString());
+            int multiValue = Integer.parseInt(table.getModel().getValueAt(i, 2).toString());
+            sql = "insert into szorzas.dump (F, S, P) values (" + firstValue + ", " + secondValue + ", " + multiValue + ");";
+            stm.execute(sql);
+        }        
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if ("progress" == evt.getPropertyName()) {
+            int progress = (Integer) evt.getNewValue();
+            progressBar.setValue(progress);
+        }
+    }
+
     /**
-     * Két nem negatív számot szoroz össze. Ha negatív számot kap akkor -1-et 
-     * ad vissza.
+     * Két nem negatív számot szoroz össze. Ha negatív számot kap akkor -1-et ad
+     * vissza.
+     *
      * @author Adam Nemeth
      * @version 1.0
      * @param first első szám
@@ -152,9 +226,9 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener{
             return -1;
         }
     }
-    
-    public static void main(String[] args) {
+
+    public static void main(String[] args) throws SQLException {
         new Szorzas_gifx3q();
     }
-    
+
 }
