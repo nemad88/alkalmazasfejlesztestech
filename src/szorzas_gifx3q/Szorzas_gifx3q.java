@@ -4,17 +4,22 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Random;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 
 /**
  * 
@@ -22,7 +27,7 @@ import javax.swing.SwingConstants;
  * @version 1.0
  *
  */
-public class Szorzas_gifx3q extends JFrame{
+public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener{
 
     JSpinner firNumberSpinner, secondNumberSpinner;
     JPanel szamolPanel;
@@ -30,6 +35,37 @@ public class Szorzas_gifx3q extends JFrame{
     JButton calculateButton;
     JTabbedPane tab;
     JLabel aboutText;
+    Task task;
+    JProgressBar progressBar;
+    Integer firsttValue;
+    Integer secondtValue;    
+    
+    class Task extends SwingWorker<Void, Void> {
+        /*
+         * Main task. Executed in background thread.
+         */
+        @Override
+        public Void doInBackground() {            
+            int progress = 0;
+            //Initialize progress property.
+            setProgress(0);
+            while (progress < 100) {
+                //Sleep for up to one second.
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException ignore) {}
+                //Make random progress.
+                progress += 1;
+                setProgress(progress);
+            }
+            return null;
+        } 
+        
+        @Override
+        public void done() {
+            JOptionPane.showMessageDialog(null, "Eredmény: " + firsttValue*secondtValue);
+        }
+    }
     
     public Szorzas_gifx3q () {
         super("Program");
@@ -43,14 +79,17 @@ public class Szorzas_gifx3q extends JFrame{
         calculateButton = new JButton("Számol");
         tab = new JTabbedPane();
         aboutText = new JLabel("<html><center>Németh Ádám<br>nemethadam88@gmail.com</center></html>", SwingConstants.CENTER);
-        
+        progressBar = new JProgressBar(0, 100);
+        progressBar.setValue(0);
+        progressBar.setStringPainted(true);
         
         calculateButton.addActionListener((ae) -> {
-            Integer firsttValue = (Integer)firNumberSpinner.getValue();
-            Integer secondtValue = (Integer)secondNumberSpinner.getValue();
+            firsttValue = (Integer)firNumberSpinner.getValue();
+            secondtValue = (Integer)secondNumberSpinner.getValue();
             System.out.println(firsttValue*secondtValue);
-            JOptionPane.showMessageDialog(null, "Eredmény: " + firsttValue*secondtValue);
-            
+            task = new Task();
+            task.addPropertyChangeListener(this);
+            task.execute();
         });
         
         Dimension spinnerDimension = new Dimension(100, 30);
@@ -60,6 +99,7 @@ public class Szorzas_gifx3q extends JFrame{
         szamolPanel.add(firNumberSpinner);
         szamolPanel.add(secondNumberSpinner);        
         szamolPanel.add(calculateButton);
+        szamolPanel.add(progressBar);
         aboutPanel.add(aboutText, BorderLayout.CENTER);
         
         tab.addTab("Számolás", szamolPanel);
@@ -69,11 +109,16 @@ public class Szorzas_gifx3q extends JFrame{
         setSize(300, 300);
         setVisible(true);
     }
-    
-    public static void main(String[] args) {
-        new Szorzas_gifx3q();
-    }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+       if ("progress" == evt.getPropertyName()) {
+            int progress = (Integer) evt.getNewValue();
+            progressBar.setValue(progress);            
+        }
+    }
+    
+    
     /**
      * Két nem negatív számot szoroz össze. Ha negatív számot kap akkor -1-et 
      * ad vissza.
@@ -89,4 +134,9 @@ public class Szorzas_gifx3q extends JFrame{
             return -1;
         }
     }
+    
+    public static void main(String[] args) {
+        new Szorzas_gifx3q();
+    }
+    
 }
