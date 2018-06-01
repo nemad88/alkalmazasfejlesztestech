@@ -7,6 +7,12 @@ import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -42,8 +48,8 @@ import javax.swing.table.DefaultTableModel;
 public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
 
     private JSpinner firstNumberSpinner, secondNumberSpinner;
-    private JPanel szamolPanel, vezerlokPanel, aboutPanel, adatbazisPanel;
-    private JButton calculateButton, dbbeButton, dbboButton;
+    private JPanel szamolPanel, vezerlokPanel, aboutPanel, adatbazisPanel, filePanel;
+    private JButton calculateButton, dbbeButton, dbboButton, saveFileButton, loadFileButton;
     private JTabbedPane tab;
     private JLabel aboutText;
     private Task task;
@@ -55,18 +61,17 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
     private Connection con;
     private Statement stm;
 
-
     class Task extends SwingWorker<Void, Void> {
-        
+
         @Override
         public Void doInBackground() {
-            int progress = 0;            
+            int progress = 0;
             setProgress(0);
             while (progress < 100) {
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException ignore) {
-                }                
+                }
                 progress += 1;
                 setProgress(progress);
             }
@@ -82,7 +87,7 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
     }
 
     public Szorzas_gifx3q() throws SQLException {
-        super("Program");
+        super("Szorzás");
         setGUI();
     }
 
@@ -92,6 +97,7 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
         vezerlokPanel = new JPanel();
         aboutPanel = new JPanel(new BorderLayout());
         adatbazisPanel = new JPanel();
+        filePanel = new JPanel();
         szamolPanel.setLayout(new BoxLayout(szamolPanel, BoxLayout.Y_AXIS));
 
         firstNumberSpinner = new JSpinner();
@@ -116,7 +122,23 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
                 Logger.getLogger(Szorzas_gifx3q.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
+        saveFileButton = new JButton("Kimentés állományba");
+        loadFileButton = new JButton("Betöltés állományból");
+        saveFileButton.setBackground(Color.green);
+        loadFileButton.setBackground(Color.green);
 
+        saveFileButton.addActionListener((ae) -> {
+            try {
+                saveToFile();
+            } catch (IOException ex) {
+                Logger.getLogger(Szorzas_gifx3q.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        
+        loadFileButton.addActionListener((ae) -> {
+            loadFromFile();
+        });
+        
         tab = new JTabbedPane();
         aboutText = new JLabel("<html><center>Németh Ádám<br>nemethadam88@gmail.com</center></html>", SwingConstants.CENTER);
         table = new JTable();
@@ -132,10 +154,10 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
 
         calculateButton.addActionListener((ae) -> {
             firstValue = (Integer) firstNumberSpinner.getValue();
-            secondValue = (Integer) secondNumberSpinner.getValue();            
+            secondValue = (Integer) secondNumberSpinner.getValue();
             task = new Task();
             task.addPropertyChangeListener(this);
-            task.execute();            
+            task.execute();
         });
 
         Dimension spinnerDimension = new Dimension(100, 30);
@@ -150,9 +172,13 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
         adatbazisPanel.add(dbbeButton);
         adatbazisPanel.add(dbboButton);
 
+        filePanel.add(saveFileButton);
+        filePanel.add(loadFileButton);
+
         szamolPanel.add(vezerlokPanel);
         szamolPanel.add(new JScrollPane(table));
         szamolPanel.add(adatbazisPanel);
+        szamolPanel.add(filePanel);
         aboutPanel.add(aboutText, BorderLayout.CENTER);
 
         tab.addTab("Számolás", szamolPanel);
@@ -160,6 +186,7 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
 
         add(tab);
         pack();
+        setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
     }
@@ -172,16 +199,16 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
         String sql = "select * from szorzas.dump;";
         con = DriverManager.getConnection("jdbc:mysql://localhost:3307/szorzas?user=root&password=");
         stm = con.createStatement();
-        ResultSet rs = stm.executeQuery(sql);        
+        ResultSet rs = stm.executeQuery(sql);
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
-        
+
         while (rs.next()) {
-            model.addRow(new Object[]{rs.getInt("F"),rs.getInt("S"), rs.getInt("P")});            
-        }        
-    }    
-    
-    public void refreshDb() throws SQLException {        
+            model.addRow(new Object[]{rs.getInt("F"), rs.getInt("S"), rs.getInt("P")});
+        }
+    }
+
+    public void refreshDb() throws SQLException {
         con = DriverManager.getConnection("jdbc:mysql://localhost:3307/?user=root&password=");
         stm = con.createStatement();
         String sql = "create database if not exists szorzas;";
@@ -189,7 +216,7 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
         sql = "create table if not exists szorzas.dump (F integer, S integer, P integer);";
         stm.execute(sql);
         sql = "delete from szorzas.dump;";
-        stm.execute(sql);        
+        stm.execute(sql);
         int rowCount = table.getModel().getRowCount();
         int columnCount = table.getModel().getColumnCount();
 
@@ -199,7 +226,33 @@ public class Szorzas_gifx3q extends JFrame implements PropertyChangeListener {
             int multiValue = Integer.parseInt(table.getModel().getValueAt(i, 2).toString());
             sql = "insert into szorzas.dump (F, S, P) values (" + firstValue + ", " + secondValue + ", " + multiValue + ");";
             stm.execute(sql);
-        }        
+        }
+    }
+
+    public void saveToFile() throws IOException {
+        FileOutputStream fileOut = new FileOutputStream("stuff.ser");
+        ObjectOutputStream out = new ObjectOutputStream(fileOut);
+        out.writeObject(model);
+        out.close();
+    }
+
+    public void loadFromFile() {
+        try {
+            FileInputStream fileIn = new FileInputStream("stuff.ser");
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            model = (DefaultTableModel) in.readObject();
+            table.setModel(model);
+            in.close();
+            fileIn.close();
+        } catch (IOException i) {
+            i.printStackTrace();
+            return;
+        } catch (ClassNotFoundException c) {
+            System.out.println("Employee class not found");
+            c.printStackTrace();
+            return;
+        }
+
     }
 
     @Override
